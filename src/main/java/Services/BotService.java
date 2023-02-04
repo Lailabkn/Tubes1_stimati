@@ -37,19 +37,63 @@ public class BotService {
         playerAction.action = PlayerActions.FORWARD;
         playerAction.heading = new Random().nextInt(360);
 
-        if (!gameState.getGameObjects().isEmpty()) {
+        if (!this.gameState.getGameObjects().isEmpty()) {
             var foodList = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD)
+                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SUPERFOOD)
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
 
             playerAction.heading = getHeadingBetween(foodList.get(0));
         }
-
         this.playerAction = playerAction;
-    }
 
+        if (!this.gameState.getPlayerGameObjects().isEmpty()) {
+            var enemyList = gameState.getPlayerGameObjects()
+                    .stream().filter(enemy -> enemy.getGameObjectType() == ObjectTypes.PLAYER)
+                    .sorted(Comparator
+                            .comparing(enemy -> getDistanceBetween(bot, enemy)))
+                    .collect(Collectors.toList());
+
+            if (enemyList.size() > getBot().getSize()) {
+                playerAction.action = PlayerActions.FORWARD;
+                playerAction.heading = getHeadingBetween(enemyList.get(0));
+            } else {
+                playerAction.action = PlayerActions.FORWARD;
+                playerAction.heading = getHeadingBetween(enemyList.get(0));
+                if (getDistanceBetween(bot, enemyList.get(0)) < 100) {
+                    playerAction.action = PlayerActions.FORWARD;
+                    playerAction.heading = getHeadingBetween(enemyList.get(0)) + 180;
+                
+                } else {
+                    playerAction.action = PlayerActions.FORWARD;
+                    playerAction.heading = getHeadingBetween(enemyList.get(0));
+                }
+            }
+        }
+
+        if (!this.gameState.getGameObjects().isEmpty()) {
+            var obstacleList = gameState.getGameObjects()
+                    .stream().filter(obstacle -> obstacle.getGameObjectType() == ObjectTypes.GAS_CLOUD
+                    || obstacle.getGameObjectType() == ObjectTypes.ASTEROID_FIELD)
+                    .sorted(Comparator
+                            .comparing(obstacle -> getDistanceBetween(bot, obstacle)))
+                    .collect(Collectors.toList());
+
+            if (obstacleList.size() > 0) {
+                playerAction.action = PlayerActions.FORWARD;
+                playerAction.heading = getHeadingBetween(obstacleList.get(0)) + 180;
+            } else {
+                playerAction.action = PlayerActions.FORWARD;
+                playerAction.heading = getHeadingBetween(obstacleList.get(0));
+            }
+
+        
+        }
+            
+            
+
+    }
     public GameState getGameState() {
         return this.gameState;
     }
