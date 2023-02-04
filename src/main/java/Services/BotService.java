@@ -33,10 +33,10 @@ public class BotService {
         this.playerAction = playerAction;
     }
 
-    public void computeNextPlayerAction(PlayerAction playerAction) {
+public void computeNextPlayerAction(PlayerAction playerAction) {
         playerAction.action = PlayerActions.FORWARD;
         playerAction.heading = new Random().nextInt(360);
-
+        //ini untuk superfood yang nanti dia harus cari food terdekat
         if (!this.gameState.getGameObjects().isEmpty()) {
             var foodList = gameState.getGameObjects()
                     .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SUPERFOOD)
@@ -47,7 +47,7 @@ public class BotService {
             playerAction.heading = getHeadingBetween(foodList.get(0));
         }
         this.playerAction = playerAction;
-
+        //ini untuk ngehindarin musuh
         if (!this.gameState.getPlayerGameObjects().isEmpty()) {
             var enemyList = gameState.getPlayerGameObjects()
                     .stream().filter(enemy -> enemy.getGameObjectType() == ObjectTypes.PLAYER)
@@ -63,37 +63,28 @@ public class BotService {
                 playerAction.heading = getHeadingBetween(enemyList.get(0));
                 if (getDistanceBetween(bot, enemyList.get(0)) < 100) {
                     playerAction.action = PlayerActions.FORWARD;
-                    playerAction.heading = getHeadingBetween(enemyList.get(0)) + 180;
+                    playerAction.heading = (getHeadingBetween(enemyList.get(0)) + 180) % 360;
                 
                 } else {
                     playerAction.action = PlayerActions.FORWARD;
                     playerAction.heading = getHeadingBetween(enemyList.get(0));
                 }
             }
-        }
 
-        if (!this.gameState.getGameObjects().isEmpty()) {
-            var obstacleList = gameState.getGameObjects()
-                    .stream().filter(obstacle -> obstacle.getGameObjectType() == ObjectTypes.GAS_CLOUD
-                    || obstacle.getGameObjectType() == ObjectTypes.ASTEROID_FIELD)
-                    .sorted(Comparator
-                            .comparing(obstacle -> getDistanceBetween(bot, obstacle)))
-                    .collect(Collectors.toList());
-
-            if (obstacleList.size() > 0) {
+            //ini untuk ngehindarin ring
+            // int ring = World.getCenterPoint();
+            Position posisi = new Position(0, 0);
+            GameObject tengah = new GameObject(null, null, null, null, posisi, null);
+            // posisi = Bot.getRadius();
+            if (getDistanceBetween(bot, tengah) > 890) {
                 playerAction.action = PlayerActions.FORWARD;
-                playerAction.heading = getHeadingBetween(obstacleList.get(0)) + 180;
-            } else {
-                playerAction.action = PlayerActions.FORWARD;
-                playerAction.heading = getHeadingBetween(obstacleList.get(0));
-            }
-
-        
+                playerAction.heading = (getHeadingBetween(tengah)) % 360;
+            } 
+            
         }
-            
-            
 
     }
+
     public GameState getGameState() {
         return this.gameState;
     }
