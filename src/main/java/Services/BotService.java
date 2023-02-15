@@ -342,7 +342,7 @@ public class BotService {
             target = worldCenter;
         }
 
-        if ((targetIsPlayer || target == worldCenter) && bot.size > 20 && bot.torpedoSalvoCount > 0)
+        if ((targetIsPlayer) && bot.size > 20 && bot.torpedoSalvoCount > 0)
             {
                 System.out.println("Firing Torpedoes at target");
                 actionID = PlayerActions.FIRE_TORPEDOES;
@@ -363,7 +363,8 @@ public class BotService {
         var heading = new Random().nextInt(360);
         if (!gameState.getGameObjects().isEmpty()) {
             var nearestFood = gameState.getGameObjects()
-                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD)
+                    .stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD
+                    || item.getGameObjectType() == ObjectTypes.SUPERFOOD)
                     .sorted(Comparator
                             .comparing(item -> getDistanceBetween(bot, item)))
                     .collect(Collectors.toList());
