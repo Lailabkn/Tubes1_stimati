@@ -56,9 +56,6 @@ pause
 
 ## Cara Penggunaan
 
-1. Clone repository ini menggunakan menggunakan command `git clone https://github.com/jasonrivalino/TubesTBFO-AgeusJayyUkii.gt`.
-2. Ketik source code yang hendak di parsing pada suatu file dengan directory yang sama dengan program `mainprogram.py`, kemudian save file tersebut.
-3. Jalankan program parsing menggunakan command `py mainprogram.py <source_code>`.
 
 ## Authors
 
