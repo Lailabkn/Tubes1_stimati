@@ -17,6 +17,9 @@ public class BotService {
     private int timeSinceLastAction;
     private boolean targetIsPlayer = false;
     private boolean afterBurner = false;
+    private boolean tembakTeleport = false;
+    private int teleportTick = 0;
+    private GameObject playerTerdekat;
 
     public BotService() {
         this.playerAction = new PlayerAction();
@@ -56,7 +59,9 @@ public class BotService {
                 var badList = gameState.getGameObjects()
                         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.GASCLOUD
                         || item.getGameObjectType() == ObjectTypes.ASTEROIDFIELD
-                        || item.getGameObjectType() == ObjectTypes.TORPEDOSALVO)
+                        || item.getGameObjectType() == ObjectTypes.TORPEDOSALVO
+                        || item.getGameObjectType() == ObjectTypes.WORMHOLE
+                        )
                         .sorted(Comparator
                         .comparing(item -> getDistanceBetween(bot, item)))
                         .collect(Collectors.toList());
@@ -65,6 +70,87 @@ public class BotService {
                         .sorted(Comparator
                         .comparing(enemy -> getDistanceBetween(bot, enemy)))
                         .collect(Collectors.toList());
+                playerTerdekat = enemyList.get(0);
+
+                //ByOne
+                if (enemyList.size() == 1){
+                    //ketika bertemu dgn musuh lebih besar
+                    if (enemyList.get(0).size >= bot.getSize() && bot.getSize() > 50) {
+                        if(afterBurner = true){
+                            afterBurner = false;
+                            System.out.println("matiin afterburner");
+                            playerAction.action = PlayerActions.STOPAFTERBURNER;
+                        }
+                        playerAction.heading = getHeadingBetween(enemyList.get(0));
+                        playerAction.action = PlayerActions.FIRETORPEDOES;
+                        playerAction.action = PlayerActions.FIRETORPEDOES;
+                        playerAction.action = PlayerActions.FIRETORPEDOES;
+                        playerAction.heading = getHeadingBetween(enemyList.get(0)) + 90 % 360;
+                        playerAction.action = PlayerActions.FORWARD;
+                        // musuh masih lebih besar setelah ditembak
+                        if(enemyList.get(0).size >= bot.getSize()){
+                            playerAction.action = PlayerActions.FORWARD;    
+                            playerAction.heading = getHeadingBetween(enemyList.get(0)) + 90 %360;
+                            System.out.println("musuhnya masi besar anj");
+                            // jaraknya musuh gede deket banget
+                            if(bot.getSize() > 60 && getDistanceBetween(bot, enemyList.get(0)) - bot.getSize() - enemyList.get(0).size < 100){
+                                playerAction.heading = getHeadingBetween(enemyList.get(0)) + 90 % 360;
+                                playerAction.action = PlayerActions.FORWARD;
+                                playerAction.heading = getHeadingBetween(enemyList.get(0));
+                                playerAction.action = PlayerActions.FIRETORPEDOES;
+                                playerAction.action = PlayerActions.FIRETORPEDOES;
+                                playerAction.action = PlayerActions.FIRETORPEDOES;
+                                afterBurner = true;
+                                System.out.println("lariiii");
+                            }
+                        } 
+
+                        // musuh mengecil
+                        else if (enemyList.get(0).size < bot.getSize()) {
+                            playerAction.heading = getHeadingBetween(enemyList.get(0));
+                            System.out.println("musuhnya mengecil cok mari makan");
+                        }
+                    
+                    }
+
+                    // ketika musuhnya kecil
+                    if(enemyList.get(0).size < bot.getSize()) {
+                        playerAction.action = PlayerActions.FORWARD;
+                        playerAction.heading = getHeadingBetween(enemyList.get(0));
+                        System.out.println("yey doi kecil"); 
+                        if (getDistanceBetween(bot, enemyList.get(0)) < 50 && tembakTeleport == false) {
+                            playerAction.heading = getHeadingBetween(enemyList.get(0));
+                            playerAction.action = PlayerActions.FIRETELEPORT;
+                            tembakTeleport = true;
+                        }
+                        else if (tembakTeleport == true) {
+                            teleportTick++;
+                            System.out.println("tik tik: "+teleportTick);
+                        }
+                        else if (teleportTick == 5) {
+                            playerAction.heading = getHeadingBetween(enemyList.get(0));
+                            playerAction.action = PlayerActions.TELEPORT;
+                            System.out.println("teleport");
+                            tembakTeleport = false;
+                            teleportTick = 0;
+                        }
+                    }
+
+                    // nembak musuh yang deket pas byone
+                    if(getDistanceBetween(bot,enemyList.get(0))-bot.getSize()-enemyList.get(0).getSize() < 100){
+                        playerAction.heading = getHeadingBetween(enemyList.get(0));
+                        playerAction.action = PlayerActions.FIRETORPEDOES;
+                        playerAction.action = PlayerActions.FIRETORPEDOES;
+                        playerAction.action = PlayerActions.FIRETORPEDOES;
+                        System.out.println("duh ada musuh");
+                    }
+
+                    // nyalain shield ketika ada musuh yang nembakin fire torpedo
+                    if (bot.shieldCount > 0 && playerTerdekat.torpedoSalvoCount > 0 && getDistanceBetween(bot, playerTerdekat) - 2 * playerTerdekat.size < 100) {
+                        playerAction.action = PlayerActions.ACTIVATESHIELD;
+                        System.out.println("shield cok");
+                    }
+                }
                 //makan makanan
                 if(getDistanceBetween(bot,goodList.get(0))<10+bot.getSize()){
                     playerAction.action = PlayerActions.FORWARD;
@@ -78,11 +164,6 @@ public class BotService {
                         System.out.println("matiin afterburner");
                         playerAction.action = PlayerActions.STOPAFTERBURNER;
                     }
-                    // if(bot.getSize()>=enemyList.get(0).size-15){
-                    //     playerAction.heading = getHeadingBetween(enemyList.get(0));
-                    //     playerAction.action = PlayerActions.FIRETORPEDOES;
-                    //     System.out.println("cok musuhnya gede bgt");
-                    // }
                     // ketika musuhnya masih besar
                     if(enemyList.get(0).size >= bot.getSize()){
                         playerAction.action = PlayerActions.FORWARD;    
@@ -94,22 +175,15 @@ public class BotService {
                             afterBurner = true;
                             System.out.println("nyalain afterburner");
                         }
-                        // var direction = toDegrees(Math.atan2(enemyList.get(0).getPosition().y - bot.getPosition().y,
-                        //     enemyList.get(0).getPosition().x - bot.getPosition().x));
-                        // if(direction> 120 && direction <240){
-                        //     playerAction.action = PlayerActions.FORWARD;
-                        // }
-                        // else{
-                        //     playerAction.heading = getHeadingBetween(enemyList.get(0)) + 90 % 360;
-                        // }
+                        //ketika musuhnya mengecil
+                        if(enemyList.get(0).size < bot.getSize()) {
+                            playerAction.action = PlayerActions.FIRETORPEDOES;
+                            playerAction.action = PlayerActions.FORWARD;
+                            playerAction.heading = getHeadingBetween(enemyList.get(0));
+                            System.out.println("yey doi mengecil");
+                        }
                     }   
-                    //ketika musuhnya mengecil
-                    if(enemyList.get(0).size < bot.getSize()) {
-                        playerAction.action = PlayerActions.FIRETORPEDOES;
-                        playerAction.action = PlayerActions.FORWARD;
-                        playerAction.heading = getHeadingBetween(enemyList.get(0));
-                        System.out.println("yey doi mengecil");
-                    }
+                    
                 } 
                 System.out.println("enemy =" + enemyList.get(0).size + "    bot = " + bot.getSize());
                 //ketika dpt musuh lbh kecil
@@ -149,63 +223,24 @@ public class BotService {
                         playerAction.heading = getHeadingBetween(enemyList.get(0));
                         playerAction.action = PlayerActions.FIRETORPEDOES;
                         System.out.println("duh ada musuh");
+                        //ketika musuhnya mengecil
+                        if(enemyList.get(0).size < bot.getSize()) {
+                            playerAction.action = PlayerActions.FIRETORPEDOES;
+                            playerAction.action = PlayerActions.FORWARD;
+                            playerAction.heading = getHeadingBetween(enemyList.get(0));
+                            System.out.println("yey doi mengecil");
+                        }
                     }
-                    if ( getDistanceBetween(bot, badList.get(0)) < 20 && bot.shieldCount > 0 && getDistanceBetween(enemyList.get(0), bot) < 45) {
-                        playerAction.heading = getHeadingBetween(enemyList.get(0)) + 100 % 360;
+                    if (getDistanceBetween(bot, enemyList.get(0)) < 50 && bot.shieldCount > 0 && playerTerdekat.torpedoSalvoCount > 0) {
                         playerAction.action = PlayerActions.ACTIVATESHIELD;
                         System.out.println("duh ada torpedo, nyalain shield y");
                     }
                 }
-                if (enemyList.get(0).size == 0) {
-                    byOne();
-                }
                 
             }
             this.playerAction = playerAction;
-        }
-
-    public void byOne () {
-        // jika di map tersisa satu musuh lagi
-        var enemyList = gameState.getPlayerGameObjects()
-                        .stream().filter(enemy -> enemy.getGameObjectType() == ObjectTypes.PLAYER && enemy.id != bot.id )
-                        .sorted(Comparator
-                        .comparing(enemy -> getDistanceBetween(bot, enemy)))
-                        .collect(Collectors.toList());
-        var torpedoSalvo = gameState.getGameObjects()
-                        .stream().filter(torpedo -> torpedo.getGameObjectType() == ObjectTypes.TORPEDOSALVO)
-                        .sorted(Comparator
-                        .comparing(torpedo -> getDistanceBetween(bot, torpedo)))
-                        .collect(Collectors.toList());
-        if (enemyList.size() == 1) {
-            if (afterBurner == true) {
-                playerAction.action = PlayerActions.STOPAFTERBURNER;
-                afterBurner = false;
-            }
-            if (bot.getSize() > enemyList.get(0).getSize()) {
-                if (getDistanceBetween(torpedoSalvo.get(0), bot) < 50 && bot.shieldCount > 0) {
-                    playerAction.heading = getHeadingBetween(enemyList.get(0));
-                    playerAction.action = PlayerActions.ACTIVATESHIELD;
-                    System.out.println("ditembak musuh, kita ngeshield");
-                }
-                else if (getDistanceBetween(torpedoSalvo.get(0), bot) > 50) {
-                    playerAction.heading = getHeadingBetween(enemyList.get(0));
-                }
-            }
-            else if (bot.getSize() < enemyList.get(0).getSize()) {
-                if (getDistanceBetween(torpedoSalvo.get(0), bot) < 50 && bot.shieldCount > 0) {
-                    playerAction.action = PlayerActions.ACTIVATESHIELD;
-                    System.out.println("ditembak musuh, kita ngeshield");
-                }
-                else if (getDistanceBetween(enemyList.get(0), bot) < 70) {
-                    playerAction.heading = getHeadingBetween(enemyList.get(0)) + 180 % 360;
-                    playerAction.action = PlayerActions.STARTAFTERBURNER;
-                    afterBurner = true;
-                    playerAction.action = PlayerActions.FORWARD;
-                }
-                }
-            }
-        }
-
+        
+    }
 
     public GameState getGameState() {
         return this.gameState;
