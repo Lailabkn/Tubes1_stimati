@@ -55,7 +55,12 @@ pause
 ```
 
 ## Cara Penggunaan
-
+1. Jalankan run.bat dalam folder starter-pack
+2. Tunggu hingga semua proses pada terminal berhenti
+3. Buka Galaxio
+4. Buka menu "Load"
+5. Pilih file JSON yang ingin diload pada "GAME>LOG", lalu klik "START"
+6. Setelah masuk ke visualiser, kita dapat melakukan start, pause, rewind, and reset
 
 ## Authors
 
